@@ -1,6 +1,7 @@
 /**
  * CSE 344 - Homework #4
  * Multithreaded Log File Analyzer
+ * valgrind ./LogAnalyzer 10 4 logs/sample.log "ERROR"
  */
 
 #include <stdio.h>
@@ -12,7 +13,6 @@
 #include <stdbool.h>
 #include "buffer.h"
 
-//git clone https://github.com/anhelina-bond/log-file-analyzer.git
 
 // Global variables for cleanup on signal
 buffer_t *buffer = NULL;
