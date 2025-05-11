@@ -4,10 +4,7 @@
  */
 
 #define _POSIX_C_SOURCE 200809L
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <pthread.h>
+
 #include "buffer.h"
 
 extern volatile sig_atomic_t terminate;

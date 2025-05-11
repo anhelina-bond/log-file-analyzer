@@ -6,7 +6,11 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include <pthread.h>
+#include <signal.h>
 
 /**
  * Buffer structure for thread-safe producer-consumer pattern
