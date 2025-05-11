@@ -12,6 +12,8 @@
 #include <stdbool.h>
 #include "buffer.h"
 
+//git clone https://github.com/anhelina-bond/log-file-analyzer.git
+
 // Global variables for cleanup on signal
 buffer_t *buffer = NULL;
 pthread_t *workers = NULL;
