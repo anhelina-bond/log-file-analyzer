@@ -11,8 +11,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <errno.h>
 #include "buffer.h"
-
 
 // Global variables for cleanup on signal
 buffer_t *buffer = NULL;
@@ -55,8 +55,6 @@ void signal_handler(int sig) {
         if (buffer != NULL) {
             buffer_signal_all(buffer); // Wake up any waiting threads
         }
-        cleanup_resources();
-        exit(1);
     }
 }
 
@@ -68,10 +66,12 @@ void *manager_thread(void *arg) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         perror("Error opening file");
+        // Add EOF markers for each worker to signal them to exit
+        for (int i = 0; i < num_workers; i++) {
+            buffer_add(buffer, NULL);
+        }
         terminate = 1;
-        buffer_signal_all(buffer);
-        cleanup_resources();
-        exit(1);
+        return NULL;
     }
     
     char *line = NULL;
@@ -79,7 +79,24 @@ void *manager_thread(void *arg) {
     ssize_t read;
     
     // Read file line by line
-    while (!terminate && (read = getline(&line, &len, file)) != -1) {
+    while (!terminate) {
+        read = getline(&line, &len, file);
+        if (read == -1) {
+            if (feof(file)) {
+                break; // End of file
+            } else if (errno == EINTR) {
+                // Interrupted by signal, check if we need to terminate
+                if (terminate) {
+                    break;
+                } else {
+                    continue; // Retry the read
+                }
+            } else {
+                perror("Error reading file");
+                break;
+            }
+        }
+        
         // Remove newline character if present
         if (read > 0 && line[read-1] == '\n') {
             line[read-1] = '\0';
@@ -97,11 +114,9 @@ void *manager_thread(void *arg) {
         buffer_add(buffer, line_copy);
     }
     
-    // Add EOF marker to signal end of file
-    if (!terminate) {
-        for (int i = 0; i < num_workers; i++) {
-            buffer_add(buffer, NULL);
-        }
+    // Add EOF marker to signal end of file (unconditionally)
+    for (int i = 0; i < num_workers; i++) {
+        buffer_add(buffer, NULL);
     }
     
     free(line);
@@ -231,11 +246,15 @@ int main(int argc, char *argv[]) {
     // Wait for manager thread to finish
     pthread_join(manager, NULL);
     
+    // If termination was requested, ensure EOF markers are added
+    if (terminate) {
+        for (int i = 0; i < num_workers; i++) {
+            buffer_add(buffer, NULL);
+        }
+    }
+    
     // Wait for worker threads to finish
     for (int i = 0; i < num_workers; i++) {
-        if (terminate) {
-            pthread_cancel(workers[i]);
-        }
         pthread_join(workers[i], NULL);
     }
     
