@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -g
 LDFLAGS = -lpthread
 
 TARGET = LogAnalyzer
-SRCS = main.c buffer.c
+SRCS = 220104004928_main.c buffer.c
 OBJS = $(SRCS:.c=.o)
 
 .PHONY: all clean
