@@ -55,6 +55,7 @@ void signal_handler(int sig) {
         if (buffer != NULL) {
             buffer_signal_all(buffer); // Wake up any waiting threads
         }
+        cleanup_resources();
         exit(1);
     }
 }
@@ -69,6 +70,7 @@ void *manager_thread(void *arg) {
         perror("Error opening file");
         terminate = 1;
         buffer_signal_all(buffer);
+        cleanup_resources();
         exit(1);
     }
     
